@@ -641,9 +641,11 @@ Topic A (the main topic, first in the vs-string) uses outer `--x-handle`, `--x-r
 
 **Then do WebSearch supplements** for: `{TOPIC_A} vs {TOPIC_B} comparison {YEAR}` and `{TOPIC_A} vs {TOPIC_B} which is better` — these catch rivalry articles that per-entity passes might not surface.
 
+**Fill the `Setting the narrative?` row using `RESOLVED_POSITIONING` + the community evidence.** Run Step 0.55 item 6 (first-party positioning) per entity - it gives you each entity's CURRENT stated pitch, fetched fresh, not from memory. Then judge: is the community conversation actually ABOUT what the entity pitches, or about something else (pricing, rivals, an incident, a ToS change)? Start the cell with **Yes / Partly / No / Unclear**, then name the topic the community is really on, anchored to a real item with its engagement (e.g. "No - pitches uptime, but the top thread is friendly-fraud, 323pt HN"). The mismatch is the signal: companies usually don't control their own conversation. Use **Unclear** when the evidence is thin or polluted with unrelated brand-name matches (e.g. someone's `.vercel.app` app, an exam "calc") - do NOT infer a verdict from vibes. Write N/A for entities with no public pitch (people, abstract concepts).
+
 **Skip the normal Step 1 below** - go directly to the comparison synthesis format (see "If QUERY_TYPE = COMPARISON" in the synthesis section).
 
-**COMPARISON TABLE SCAFFOLD (engine-emitted, pass through verbatim):** For comparison topics, the engine's compact output includes a `## Head-to-Head` block with an empty markdown table (columns = entities, rows = axes like "What it is", "Community sentiment", "Trajectory"). Your synthesis MUST include this block verbatim with filled cells, positioned between the narrative and the emoji-tree footer. Keep each cell to 5-15 words. Use ' - ' (hyphen with spaces) not em-dashes inside cells.
+**COMPARISON TABLE SCAFFOLD (engine-emitted, pass through verbatim):** For comparison topics, the engine's compact output includes a `## Head-to-Head` block with an empty markdown table (columns = entities, rows = axes like "What it is", "Setting the narrative?", "Best for"). Your synthesis MUST include this block verbatim with filled cells, positioned between the narrative and the emoji-tree footer. Keep each cell to 5-15 words. Use ' - ' (hyphen with spaces) not em-dashes inside cells.
 
 ### Competitor mode (`--competitors`)
 
@@ -748,6 +750,8 @@ Store as `RESOLVED_IG_CREATORS`.
 
 Store as `RESOLVED_YT_QUERIES`.
 
+**6. First-party positioning** - **MANDATORY when WebSearch is available, for company / product / service topics.** If the topic (or, in a vs-run, an entity) is a company, product, or service with a public presence, fetch its CURRENT stated positioning. Do **NOT** rely on memory - homepages and positioning go stale as companies rewrite copy and pivot, and a stale claim produces a false gap. Anchor on first-party sources: the homepage tagline, docs, pricing, or a "compare/why-us" page. Fold this into the per-entity passes above where you can (e.g. add `official site` to a query); otherwise run one focused search per entity (`{TOPIC} official site`, `{TOPIC} pricing`). Capture the one-line value prop and any explicit claims ("zero-config", "fastest", "open source"). Store as `RESOLVED_POSITIONING`. This is what the entity *pitches*; the engine's community data is what people *actually talk about*. Whether those two line up feeds the `Setting the narrative?` synthesis (the conversation is often on a different topic than the pitch - that mismatch is the signal). Skip (and omit `RESOLVED_POSITIONING`) for people, events, or abstract concepts - they make no comparable public claim.
+
 **Concrete examples:**
 
 | Topic | WebSearches needed | Reddit subs | TikTok hashtags | TikTok creators | IG creators | YT queries |
@@ -800,9 +804,10 @@ Resolved:
 - Reddit: r/{sub1}, r/{sub2}, r/{sub3}, r/{peer1}, r/{peer2} (+ {category_id} peers)
 - TikTok: #{hashtag1}, #{hashtag2}
 - YouTube: {query1}, {query2}
+- Positioning: "{one-line stated value prop}" (first-party)
 ```
 
-Only show lines for platforms where something was resolved. Skip empty lines. On the Reddit line, the trailing `(+ {category_id} peers)` annotation appears when Step 0.55 Section 2a added category-peer subs. Omit the annotation when the topic had no matching category. This display replaces the old "Parsed intent" block with something more useful.
+Only show lines for platforms where something was resolved. Skip empty lines. On the Reddit line, the trailing `(+ {category_id} peers)` annotation appears when Step 0.55 Section 2a added category-peer subs. Omit the annotation when the topic had no matching category. The `Positioning:` line appears for company / product / service topics (from Step 0.55 item 6); omit it for people, events, and abstract concepts. This display replaces the old "Parsed intent" block with something more useful.
 
 ---
 
@@ -1290,6 +1295,7 @@ Voice contract LAWs 1, 3, 5 apply to comparisons unchanged (no `Sources:` block,
 | Dimension | {Entity 1} | {Entity 2} | {Entity 3} |
 |---|---|---|---|
 | What it is | ... | ... | ... |
+| Setting the narrative? | ... | ... | ... |
 | GitHub stars | ... | ... | ... |
 | Philosophy | ... | ... | ... |
 | Skills | ... | ... | ... |
@@ -1299,7 +1305,7 @@ Voice contract LAWs 1, 3, 5 apply to comparisons unchanged (no `Sources:` block,
 | Best for | ... | ... | ... |
 | Install | ... | ... | ... |
 
-(Engine emits this scaffold; fill the cells with 5-15 words each. If an axis does not apply to the topic class, write "N/A" or a topic-appropriate substitute rather than inventing data.)
+(Engine emits this scaffold; fill the cells with 5-15 words each. If an axis does not apply to the topic class, write "N/A" or a topic-appropriate substitute rather than inventing data. For the `Setting the narrative?` row, judge whether each entity's community conversation is about what the entity itself pitches: start the cell with **Yes / Partly / No / Unclear**, then name the topic the community is ACTUALLY on, anchored to a real item with engagement, e.g. "No - pitches uptime, but the top thread is friendly-fraud (323pt HN)". The mismatch is the signal - companies usually don't control their own conversation. Use "Unclear" when evidence is thin or polluted with unrelated brand-name matches; write N/A for entities with no public pitch, like people or abstract concepts. Do NOT infer a verdict from vibes.)
 
 ## The Bottom Line
 
@@ -1440,6 +1446,8 @@ KEY PATTERNS from the research:
 At render time the `@handle`, `r/sub`, and publication-name placeholders become markdown links wrapping the actual handle/sub/name, with the URL pulled from the raw research dump. Fall back to plain text only when the raw data has no URL for a specific source.
 
 Headlines should be specific and newsy ("BULLY dropped and it's dominating", "Europe is banning him one country at a time"), not generic ("Album release", "Tour updates").
+
+**Narrative-check beat (company / product / service topics).** If the topic is a company, product, or service and you captured `RESOLVED_POSITIONING` in Step 0.55, work in ONE bold-lead-in paragraph on whether the entity is setting its own narrative - i.e. is the community actually talking about what it pitches, or about something else (pricing, rivals, an incident, a ToS change)? Anchor the verdict to the real top-discussed item with its engagement - e.g. `**Vercel is losing the narrative to its pricing** - it still sells "the AI Cloud" and zero-overhead speed, but the loudest community thread this month is about cost and a June 1 ToS change, not performance`. When the conversation DOES track the pitch, say so (that is the "Yes" case, equally worth stating). Keep it a normal newsy bold-lead-in paragraph with a specific headline (per the rule above), NOT a new `##` section (LAW 4 still holds). Skip it silently for people, events, and abstract concepts, or when the evidence is too thin or noise-polluted to tell - do not manufacture a verdict.
 
 **THEN - Quality Nudge (if present in the output):**
 

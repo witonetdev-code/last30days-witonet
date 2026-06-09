@@ -101,6 +101,8 @@ class RenderComparisonMultiTests(unittest.TestCase):
         self.assertIn("## xAI", rendered)
         # Scaffold table header has a column per entity
         self.assertIn("| Dimension | OpenAI | Anthropic | xAI |", rendered)
+        # The narrative-lens axis is emitted as a scaffold row
+        self.assertIn("| Setting the narrative? |", rendered)
         # Envelope scaffolding present
         self.assertIn("EVIDENCE FOR SYNTHESIS", rendered)
         self.assertIn("END OF last30days CANONICAL OUTPUT", rendered)
