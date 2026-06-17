@@ -120,7 +120,13 @@ def available_sources(config: dict[str, Any], requested_sources: list[str] | Non
         available.append("bluesky")
     if env.is_truthsocial_available(config):
         available.append("truthsocial")
-    if config.get("BRAVE_API_KEY") or config.get("EXA_API_KEY") or config.get("SERPER_API_KEY") or config.get("PARALLEL_API_KEY"):
+    # Grounding (general web) is available when a paid backend is configured OR
+    # the keyless floor is permitted (i.e. the host has no native search). On a
+    # native-search host with no paid key, keyless_web_allowed is False and the
+    # engine leaves general web to the model's own search.
+    if (config.get("BRAVE_API_KEY") or config.get("EXA_API_KEY")
+            or config.get("SERPER_API_KEY") or config.get("PARALLEL_API_KEY")
+            or env.keyless_web_allowed(config)):
         available.append("grounding")
     if requested_sources and "jobs" in requested_sources:
         available.append("jobs")
@@ -216,7 +222,7 @@ def run(
             available = [source for source in available if source in requested_sources]
     if web_backend == "none":
         available = [s for s in available if s != "grounding"]
-    elif web_backend in ("brave", "exa", "serper", "parallel") and "grounding" not in available:
+    elif web_backend in ("brave", "exa", "serper", "parallel", "keyless") and "grounding" not in available:
         available.append("grounding")
     if (hiring_signals_mode or _company_topic_likely(topic)) and "jobs" not in available:
         available.append("jobs")

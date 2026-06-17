@@ -270,6 +270,14 @@ fi
 LAST30DAYS_MEMORY_DIR="${LAST30DAYS_MEMORY_DIR:-$HOME/Documents/Last30Days}"
 ```
 
+**Native-search signal (web coverage).** If you (the hosting model) have your own web-search tool available — e.g. Claude Code's `WebSearch`, which STEP 0 loads — export `LAST30DAYS_NATIVE_SEARCH=1` in the same shell before invoking the engine:
+
+```bash
+export LAST30DAYS_NATIVE_SEARCH=1   # ONLY when you have a native web-search tool
+```
+
+Your native search is better than the engine's keyless web fallback, so this tells the engine to skip that fallback and leave general web to you (you already run WebSearch supplements in Step 2). If you have NO native web-search tool (some non-Claude hosts and headless/cron paths), do **not** set this: the engine's keyless web floor supplies general-web coverage automatically. The rule is capability-based, not host-name-based — set it only when you genuinely have a better search, never to suppress the floor on a host that has nothing else.
+
 ## Configuration
 
 Set `LAST30DAYS_MEMORY_DIR` before invoking the skill to choose where raw research files are saved. If it is not set, the skill defaults to `~/Documents/Last30Days`.

@@ -158,15 +158,22 @@ When you invoke `/last30days` from Claude Code, Codex, or Gemini, the host model
 
 ## Web search backend priority
 
-Used by `--auto-resolve` (when WebSearch isn't available from the host) and Step 2 supplements. Auto-detect priority (override per-run with `--web-backend=<name>`):
+The search-source preference ladder, strict best-to-floor:
 
-1. **Brave** - `BRAVE_API_KEY`
-2. **Exa** - `EXA_API_KEY`
-3. **Serper** - `SERPER_API_KEY`
-4. **Parallel** - `PARALLEL_API_KEY`
-5. **Host's native WebSearch** - Claude Code, Codex, Gemini all have one built in
+1. **Host-native search** - Claude Code's `WebSearch`, and the equivalents on Codex / Gemini. Best results; used automatically on hosts that have it. Signalled to the engine via `LAST30DAYS_NATIVE_SEARCH=1` (the skill sets this for you when your host has a native search tool) so the engine does not run a worse search underneath it.
+2. **Paid engine backend** - one of `BRAVE_API_KEY`, `EXA_API_KEY`, `SERPER_API_KEY`, `PARALLEL_API_KEY`, auto-detected in that order. Override per-run with `--web-backend=<name>`.
+3. **Keyless engine floor** - zero-key web search (DuckDuckGo, plus an optional SearXNG instance) and zero-key page fetch (Jina Reader). Runs only when the host has **no** native search **and** no paid key is set, so headless/cron and hosts without a built-in search tool still get general-web coverage. Force it explicitly with `--web-backend=keyless`.
 
-Visible quality difference between hosts with vs without a configured backend. If your client setup produces thinner results than yours, this is usually why.
+Relevant env vars:
+
+| Var | Effect |
+| --- | --- |
+| `LAST30DAYS_NATIVE_SEARCH=1` | Tells the engine your host has native search; suppresses the keyless floor. Set automatically by the skill on capable hosts. Leave unset on hosts without a native search tool so the floor runs. |
+| `LAST30DAYS_SEARXNG_URL=<base-url>` | Optional. A SearXNG instance used as the keyless-search fallback rung when DuckDuckGo returns nothing. |
+
+Privacy note: the keyless floor sends the query (to DuckDuckGo / your SearXNG instance) and any fetched URL (to Jina Reader) to those third parties. It is intended for public-research use; results may be cached snapshots. It never runs when native search or a paid backend is in play.
+
+Visible quality difference between hosts with vs without native search or a configured backend. If your client setup produces thinner results than yours, this is usually why.
 
 ---
 

@@ -1091,6 +1091,28 @@ class TestExcludeSources(unittest.TestCase):
         self.assertIn("reddit", sources)
 
 
+class TestKeylessGroundingAvailability(unittest.TestCase):
+    """Grounding (general web) availability is host-aware.
+
+    Non-native hosts get the keyless floor by default; native-search hosts leave
+    general web to the model's own search unless a paid key is configured.
+    """
+
+    def test_grounding_available_without_key_on_non_native_host(self):
+        sources = pipeline.available_sources({})
+        self.assertIn("grounding", sources)
+
+    def test_grounding_suppressed_without_key_on_native_host(self):
+        config = {"LAST30DAYS_NATIVE_SEARCH": "1"}
+        sources = pipeline.available_sources(config)
+        self.assertNotIn("grounding", sources)
+
+    def test_grounding_available_with_paid_key_even_on_native_host(self):
+        config = {"LAST30DAYS_NATIVE_SEARCH": "1", "BRAVE_API_KEY": "k"}
+        sources = pipeline.available_sources(config)
+        self.assertIn("grounding", sources)
+
+
 class TestExcludeSourcesEndToEnd(unittest.TestCase):
     """Wiring regression: EXCLUDE_SOURCES from the process environment must
     reach available_sources() via env.get_config(). The unit tests above
