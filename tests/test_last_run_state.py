@@ -9,6 +9,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LAST30DAYS_SCRIPT = REPO_ROOT / "skills" / "last30days" / "scripts" / "last30days.py"
+SKILL_MD = REPO_ROOT / "skills" / "last30days" / "SKILL.md"
 
 
 def run_last30days(topic: str, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
@@ -78,6 +79,17 @@ class LastRunStateTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn('Last run: "custom hook query"', result.stdout)
+
+
+class TestSkillMdFirstRunReference(unittest.TestCase):
+    """Verifies SKILL.md does not reference files missing from the repo."""
+
+    def test_nux_wizard_not_referenced(self):
+        content = SKILL_MD.read_text(encoding="utf-8")
+        self.assertNotIn(
+            "nux-wizard.md", content,
+            "SKILL.md should not reference the missing nux-wizard.md file",
+        )
 
 
 if __name__ == "__main__":
