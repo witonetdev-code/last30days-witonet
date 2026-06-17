@@ -55,6 +55,7 @@ class CliV3Tests(unittest.TestCase):
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             check=False,
         )
         self.assertEqual(0, result.returncode, result.stderr)
@@ -94,6 +95,34 @@ class CliV3Tests(unittest.TestCase):
             cli.parse_search_flag("unknown")
         with self.assertRaises(SystemExit):
             cli.parse_search_flag(" , ")
+
+    def test_resolve_requested_sources_flag_wins_over_config_default(self):
+        sources = cli.resolve_requested_sources(
+            "reddit", {"LAST30DAYS_DEFAULT_SEARCH": "x,youtube"},
+        )
+        self.assertEqual(["reddit"], sources)
+
+    def test_resolve_requested_sources_falls_back_to_config_default(self):
+        sources = cli.resolve_requested_sources(
+            None, {"LAST30DAYS_DEFAULT_SEARCH": "web, reddit, hn"},
+        )
+        self.assertEqual(["grounding", "reddit", "hackernews"], sources)
+
+    def test_resolve_requested_sources_none_when_neither_set(self):
+        self.assertIsNone(cli.resolve_requested_sources(None, {}))
+        self.assertIsNone(
+            cli.resolve_requested_sources(None, {"LAST30DAYS_DEFAULT_SEARCH": ""})
+        )
+        self.assertIsNone(
+            cli.resolve_requested_sources(None, {"LAST30DAYS_DEFAULT_SEARCH": "  "})
+        )
+
+    def test_resolve_requested_sources_invalid_config_default_names_env_var(self):
+        with self.assertRaises(SystemExit) as exc:
+            cli.resolve_requested_sources(
+                None, {"LAST30DAYS_DEFAULT_SEARCH": "notasource"},
+            )
+        self.assertIn("LAST30DAYS_DEFAULT_SEARCH", str(exc.exception))
 
     def test_build_parser_accepts_days_alias_and_preserves_topic_tokens(self):
         parser = cli.build_parser()
@@ -156,10 +185,12 @@ class CliV3Tests(unittest.TestCase):
         compact = cli.emit_output(report, "compact")
         json_output = cli.emit_output(report, "json")
         context = cli.emit_output(report, "context")
+        brief = cli.emit_output(report, "brief")
 
         self.assertIn("# last30days v", compact)
         self.assertIn('"topic": "OpenClaw vs NanoClaw"', json_output)
         self.assertIsInstance(context, str)
+        self.assertIn("# Production Brief:", brief)
 
         with self.assertRaises(SystemExit):
             cli.emit_output(report, "bad-mode")

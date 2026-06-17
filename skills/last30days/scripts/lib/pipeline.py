@@ -186,6 +186,18 @@ def diagnose(config: dict[str, Any], requested_sources: list[str] | None = None)
     }
 
 
+def _inner_max_workers(stream_count: int, *, internal_subrun: bool) -> int:
+    """Worker-pool size for the per-stream fanout inside a single pipeline run.
+
+    Top-level runs use up to 16 workers. Subruns of ``run_competitor_fanout``
+    cap the inner pool to 4 so a six-way competitor fan-out stays below
+    roughly 30 worker threads in aggregate instead of ~96.
+    """
+    if internal_subrun:
+        return max(2, min(4, stream_count or 1))
+    return max(4, min(16, stream_count or 1))
+
+
 def run(
     *,
     topic: str,
@@ -364,7 +376,7 @@ def run(
         for source in subquery.sources
         if source in available
     )
-    max_workers = max(4, min(16, stream_count or 1))
+    max_workers = _inner_max_workers(stream_count, internal_subrun=internal_subrun)
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         for subquery in plan.subqueries:
             for source in subquery.sources:
@@ -506,7 +518,9 @@ def run(
     if hiring_summary:
         bundle.artifacts["hiring_signals"] = hiring_summary
 
-    items_by_source = _finalize_items_by_source(bundle.items_by_source, topic=topic, config=config)
+    items_by_source = _finalize_items_by_source(
+        bundle.items_by_source, topic=topic, config=config, depth=depth, mock=mock,
+    )
     candidates = weighted_rrf(bundle.items_by_source_and_query, plan, pool_limit=settings["pool_limit"])
     ranked_candidates = rerank.rerank_candidates(
         topic=topic,
@@ -577,11 +591,21 @@ def _finalize_items_by_source(
     items_by_source_raw: dict[str, list[schema.SourceItem]],
     topic: str = "",
     config: dict | None = None,
+    depth: str = "default",
+    mock: bool = False,
 ) -> dict[str, list[schema.SourceItem]]:
     finalized = {}
     for source, items in items_by_source_raw.items():
         items = sorted(items, key=lambda item: item.local_rank_score or 0.0, reverse=True)
         items = dedupe.dedupe_items(items)
+        if source == "youtube" and items and not mock:
+            # Same budget-at-the-survivors principle as the digg branch
+            # below: retrieval-time transcripts go to each search's
+            # top-by-views candidates, while final selection ranks by
+            # relevance. Backfill survivors that arrived without one so the
+            # transcript budget lands on videos the brief actually shows
+            # (#542).
+            youtube_yt.backfill_transcripts(items, topic=topic, depth=depth)
         # Post-merge topic-relevance filter for Polymarket: comparison queries
         # fan out into per-entity subqueries ("Hermes", "OpenClaw") whose topic
         # is too narrow for Gamma API to filter meaningfully. Re-validating the

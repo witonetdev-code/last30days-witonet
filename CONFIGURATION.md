@@ -27,8 +27,21 @@ This is a focused **configuration reference** maintained alongside the engine. T
 Each run produces one file per topic, slug-named:
 `<slug>-raw[-suffix].md`. Same topic + same suffix on the same day overwrites; same topic + same suffix on different days appends a date stamp.
 
+### Recommended `.env` entry
+
+`.env` files don't travel between machines or harnesses, so set `LAST30DAYS_MEMORY_DIR` explicitly in `~/.config/last30days/.env` once per host. The `/last30days` slash command works without it (the SKILL.md wrapper has its own default), but **bare engine invocations** — `python3 scripts/last30days.py ...` from cron jobs, scripts, or agents that bypass the wrapper — silently no-op the file save unless the engine sees the env var. Mirrors the `LAST30DAYS_STORE` env-or-flag convention.
+
+```bash
+# ~/.config/last30days/.env  (pick ONE — uncomment the line that matches your OS)
+LAST30DAYS_MEMORY_DIR=~/Documents/Last30Days                      # POSIX — defaults to this path when unset
+# LAST30DAYS_MEMORY_DIR=C:\Users\<user>\Documents\Last30Days      # Windows
+```
+
+The engine's `.env` reader doesn't expand `$HOME` — only the tilde, via `Path().expanduser()` downstream. Use `~/...` or an absolute path; **don't** write the literal string `$HOME/...` into your `.env` (it gets stored verbatim and breaks path resolution).
+
 **Per-run overrides:**
-- `--save-dir <path>` - one-off output location.
+
+- `--save-dir <path>` - one-off output location. **Flag wins over env var.** If neither flag nor env var is set, the engine does not write a file (DB persistence is independent — see `LAST30DAYS_STORE` below).
 - `--output <file>` - write the rendered output to an exact file path, using the format selected by `--emit`.
 - `--save-suffix <name>` - distinguish runs of the same topic (e.g. per client: `--save-suffix=acme`).
 
@@ -56,7 +69,7 @@ The project-scoped file is the cleanest pattern for **per-client setups**: drop 
 | Polymarket | none | always on | yes |
 | GitHub | `gh` CLI installed (uses your GitHub auth) | always on if `gh` present | yes |
 | YouTube | `yt-dlp` CLI installed | always on if `yt-dlp` present | yes |
-| X / Twitter | one of: `AUTH_TOKEN` + `CT0` (browser cookies, Bird CLI), `XAI_API_KEY`, `SCRAPECREATORS_API_KEY`, or `FROM_BROWSER` (cookie-jar auth) | X items in results | cookie-jar / Bird = free; xAI / ScrapeCreators = paid |
+| X / Twitter | one of: `AUTH_TOKEN` + `CT0` (browser cookies, Bird CLI), `XAI_API_KEY`, `XQUIK_API_KEY`, `SCRAPECREATORS_API_KEY`, or `FROM_BROWSER` (cookie-jar auth) | X items in results | cookie-jar / Bird = free; Xquik / xAI / ScrapeCreators = key-based |
 | TikTok | `SCRAPECREATORS_API_KEY` + `INCLUDE_SOURCES` contains `tiktok` | TikTok items | 10K free calls |
 | Instagram | `SCRAPECREATORS_API_KEY` + `INCLUDE_SOURCES` contains `instagram` | Instagram Reels | 10K free calls; raise `LAST30DAYS_TRANSCRIPT_TIMEOUT` (default 30s) if SC is slow on your network |
 | Threads | `SCRAPECREATORS_API_KEY` + `INCLUDE_SOURCES` contains `threads` | Threads items | 10K free calls |
@@ -83,8 +96,17 @@ SCRAPECREATORS_API_KEY=<your-scrapecreators-key>
 INCLUDE_SOURCES=tiktok,instagram
 
 # X authentication (one option only)
-XAI_API_KEY=<your-xai-key>
-# OR cookie-jar (no key needed; logs in via your browser session)
+AUTH_TOKEN=<your-auth-token>
+CT0=<your-ct0-token>
+# OR xAI API key (paid)
+# XAI_API_KEY=<your-xai-key>
+# OR Xquik key-based X search
+# XQUIK_API_KEY=<your-xquik-key>
+# OR cookie-jar (free; logs in via your browser session).
+# Unset = Firefox + Safari (silent). FROM_BROWSER=auto also tries the Chromium
+# family (Chrome, Brave, Edge, Vivaldi, Opera, Arc, Chromium); it only prompts
+# for macOS Keychain access on the browser that actually holds your X cookies.
+# Or name a single browser, e.g. brave/edge. On Windows only Firefox is supported.
 # FROM_BROWSER=firefox
 
 # Bluesky
@@ -140,6 +162,16 @@ The skill defaults to `api.bsky.app` for `searchPosts`, which is the canonical a
 ```bash
 BSKY_SEARCH_HOST=api.bsky.app   # default — change only if Bluesky moves
 ```
+
+### Default source set (`LAST30DAYS_DEFAULT_SEARCH`)
+
+By default the engine decides the source set per query (everything available, minus `EXCLUDE_SOURCES`). To pin a **fixed** source set for every run without passing `--search` each time — and without patching `SKILL.md`, which a release would overwrite — set:
+
+```bash
+LAST30DAYS_DEFAULT_SEARCH=reddit,x,youtube,hn
+```
+
+Accepts the same comma-separated names and aliases as `--search` (`web` → grounding, `hn` → hackernews, `bsky` → bluesky). Precedence: an explicit `--search` on the command line always wins; `LAST30DAYS_DEFAULT_SEARCH` applies only when the flag is omitted; when neither is set, per-query behavior is unchanged. `INCLUDE_SOURCES` / `EXCLUDE_SOURCES` keep their existing additive/subtractive roles on whichever set is selected.
 
 ---
 
@@ -321,5 +353,5 @@ This is the right home for client-specific changes you don't intend to upstream 
 
 - The CLI flag surface: `python3 scripts/last30days.py --help`
 - The skill contract (voice, LAWs, pre-flight protocol): [`skills/last30days/SKILL.md`](skills/last30days/SKILL.md)
-- Engine spec (some sections stale; SKILL.md wins on conflicts): [`SPEC.md`](SPEC.md)
+- Shared package vocabulary and engine/harness terminology: [`CONCEPTS.md`](CONCEPTS.md)
 - Contributor guidance: [`CONTRIBUTORS.md`](CONTRIBUTORS.md)

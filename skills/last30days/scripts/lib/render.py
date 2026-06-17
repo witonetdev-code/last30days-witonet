@@ -903,13 +903,13 @@ def render_full(report: schema.Report) -> str:
             # Transcript highlights for YouTube
             highlights = item.metadata.get("transcript_highlights", [])
             if highlights:
-                lines.append("  Highlights:")
+                lines.append("  Highlights (auto-generated transcript; may contain transcription errors):")
                 for hl in highlights[:5]:
                     lines.append(f'    - "{hl[:200]}"')
             # Full transcript snippet for YouTube
             transcript = item.metadata.get("transcript_snippet", "")
             if transcript and len(transcript) > 100:
-                lines.append(f"  <details><summary>Transcript ({len(transcript.split())} words)</summary>")
+                lines.append(f"  <details><summary>Transcript ({len(transcript.split())} words; auto-generated — may contain transcription errors)</summary>")
                 lines.append(f"  {transcript[:5000]}")
                 lines.append("  </details>")
             # Polymarket outcome prices and market details
@@ -985,6 +985,115 @@ def render_context(report: schema.Report, cluster_limit: int = 6) -> str:
         lines.append("Warnings:")
         lines.extend(f"- {warning}" for warning in report.warnings)
     return "\n".join(lines).strip() + "\n"
+
+
+def render_brief(report: schema.Report, cluster_limit: int = 8) -> str:
+    """Production brief for downstream pipelines (video, scripting, structured synthesis).
+
+    Reshapes ranked pipeline output into five sections that scripting pipelines
+    can consume directly: Ranked Storylines, Narrative Hooks, Topic Tensions,
+    Audience Questions, and Source Clusters. Sections 2-4 are omitted when there
+    is no matching data; Sections 1 and 5 always appear.
+    """
+    non_empty = [s for s, items in sorted(report.items_by_source.items()) if items]
+    lines = [
+        f"# Production Brief: {report.topic}",
+        "",
+        *_assistant_safety_lines(),
+        f"- Date range: {report.range_from} to {report.range_to}",
+        f"- Sources: {len(non_empty)} active ({', '.join(_source_label(s) for s in non_empty)})" if non_empty else "- Sources: none",
+        "",
+    ]
+
+    lines.append("## Ranked Storylines")
+    lines.append("")
+    candidate_by_id = {c.candidate_id: c for c in report.ranked_candidates}
+    for i, cluster in enumerate(report.clusters[:cluster_limit], start=1):
+        source_tags = ", ".join(_source_label(s) for s in cluster.sources)
+        qualifier = f" [{cluster.uncertainty.replace('-', ' ')}]" if cluster.uncertainty else ""
+        lines.append(f"### {i}. {cluster.title} (score {cluster.score:.0f}, {source_tags}){qualifier}")
+        for cid in cluster.representative_ids[:2]:
+            candidate = candidate_by_id.get(cid)
+            if not candidate:
+                continue
+            if candidate.snippet:
+                lines.append(f"- {_truncate(candidate.snippet, 280)}")
+            explanation = _format_explanation(candidate)
+            if explanation:
+                lines.append(f"  _Why: {explanation}_")
+        lines.append("")
+
+    hooks = sorted(
+        (c for c in report.ranked_candidates if c.fun_score is not None and c.fun_score >= 70),
+        key=lambda c: -(c.fun_score or 0),
+    )
+    if hooks:
+        lines.append("## Narrative Hooks")
+        lines.append("")
+        for candidate in hooks[:5]:
+            source_label = _source_label(candidate.source)
+            primary = schema.candidate_primary_item(candidate)
+            author = primary.author if primary else None
+            if author and candidate.source in ("x", "tiktok", "instagram", "threads"):
+                attribution = f"@{author} on {source_label}"
+            elif author and candidate.source == "reddit":
+                container = primary.container if primary else None
+                attribution = f"r/{container}" if container else "Reddit"
+            else:
+                attribution = source_label
+            reason = (
+                f" — {candidate.fun_explanation}"
+                if candidate.fun_explanation and candidate.fun_explanation != "heuristic-fallback"
+                else ""
+            )
+            lines.append(
+                f'- "{_truncate(candidate.title, 200)}"'
+                f" ({attribution}, fun:{candidate.fun_score:.0f}){reason}"
+            )
+        lines.append("")
+
+    tensions = [c for c in report.clusters[:cluster_limit] if c.uncertainty]
+    if tensions:
+        lines.append("## Topic Tensions")
+        lines.append("")
+        for cluster in tensions[:cluster_limit]:
+            label = cluster.uncertainty.replace("-", " ").title() if cluster.uncertainty else ""
+            source_tags = ", ".join(_source_label(s) for s in cluster.sources)
+            lines.append(f"- **{cluster.title}** [{label}]: {source_tags}")
+        lines.append("")
+
+    questions = _extract_audience_questions(report.ranked_candidates)
+    if questions:
+        lines.append("## Audience Questions")
+        lines.append("")
+        for q in questions[:8]:
+            lines.append(f"- {q}")
+        lines.append("")
+
+    lines.append("## Source Clusters")
+    lines.append("")
+    for cluster in report.clusters[:cluster_limit]:
+        source_tags = " + ".join(_source_label(s) for s in cluster.sources)
+        lines.append(f"- **{cluster.title}**: {source_tags}")
+    lines.append("")
+
+    return "\n".join(lines).strip() + "\n"
+
+
+def _extract_audience_questions(candidates: list[schema.Candidate]) -> list[str]:
+    """Return titles that read as audience questions, deduped and in ranked order."""
+    questions: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        title = candidate.title.strip()
+        if not title:
+            continue
+        if title.endswith("?"):
+            norm = title.lower()
+            if norm not in seen:
+                seen.add(norm)
+                questions.append(title)
+    return questions
 
 
 def _render_hiring_signals(report: schema.Report) -> list[str]:
@@ -1090,7 +1199,7 @@ def _render_candidate(candidate: schema.Candidate, prefix: str) -> list[str]:
         lines.append(f"   - Insight: {_truncate(insight, 220)}")
     highlights = _transcript_highlights(primary)
     if highlights:
-        lines.append("   - Highlights:")
+        lines.append("   - Highlights (auto-generated transcript; may contain transcription errors):")
         for hl in highlights:
             lines.append(f'     - "{_truncate(hl, 200)}"')
     return lines
@@ -1339,6 +1448,7 @@ _FOOTER_SOURCES: list[tuple[str, str, str, str, list[tuple[str, str]]]] = [
     # Jobs must appear so a scoped --hiring-signals run (jobs-only) still emits
     # the LAW 5 footer; without it the footer was dropped entirely.
     ("jobs",        "💼", "Jobs",         "role",     []),
+    ("perplexity",  "🧠", "Perplexity",   "result",    [("citations", "citations")]),
 ]
 
 
@@ -1691,8 +1801,6 @@ def _stats_actor(item: schema.SourceItem) -> str | None:
         return f"r/{item.container}"
     if item.source in {"x", "bluesky", "truthsocial"} and item.author:
         return f"@{item.author.lstrip('@')}"
-    if item.source == "grounding" and item.container:
-        return item.container
     if item.source == "youtube" and item.author:
         return item.author
     if item.container and item.container != "Polymarket":
