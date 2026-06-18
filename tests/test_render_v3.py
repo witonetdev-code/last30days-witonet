@@ -492,8 +492,10 @@ class RenderBestTakesCompactTests(unittest.TestCase):
         report = self._make_report_with_candidates(candidates)
         text = render.render_compact(report)
         self.assertIn("## Best Takes", text)
-        self.assertIn("(fun:85)", text)
-        self.assertIn("(fun:75)", text)
+        # fun: tag may carry a " +crowd" suffix when votes lifted the ranking,
+        # so match the score substring rather than the exact closing paren.
+        self.assertIn("fun:85", text)
+        self.assertIn("fun:75", text)
 
     def test_candidate_with_fun_score_85_shows_fun_tag(self):
         """Candidate with fun_score=85 shows 'fun:85' in its detail line."""

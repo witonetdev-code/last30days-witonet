@@ -110,6 +110,7 @@ _VOTE_LOG_REFERENCE: dict[str, float] = {
     "tiktok":     10.3,  # ~log1p(30000)
     "instagram":  9.2,   # ~log1p(10000)
     "x":          9.2,   # ~log1p(10000)
+    "bluesky":    9.2,   # ~log1p(10000); like X/IG, not the Reddit default
 }
 _VOTE_LOG_REFERENCE_DEFAULT = 7.6
 

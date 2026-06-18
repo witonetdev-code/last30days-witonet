@@ -112,6 +112,14 @@ class TestVotesInFunPrompt:
         assert "no score here" in text
         assert "[+" not in text
 
+    def test_scored_extract_negative_score_no_malformed_prefix(self):
+        """A negative score must not emit a misleading [+-N] prefix (Greptile #592)."""
+        c = _candidate(top_comments=[{"body": "downvoted line", "score": -3}])
+        text = _extract_comment_text_scored(c)
+        assert "downvoted line" in text
+        assert "[+-3]" not in text
+        assert "[+" not in text
+
     def test_prompt_contains_traction_guidance(self):
         c = _candidate(top_comments=[{"body": "lol", "score": 99}])
         prompt = _build_fun_prompt("test topic", [c])
@@ -241,6 +249,19 @@ class TestBestTakesVoteWeighting:
         low_conf = _candidate(source="reddit", fun_score=72, local_relevance=0.2,
                               top_comments=[{"body": "x", "score": 5000}])
         assert render._effective_fun_score(high_conf, weight) > render._effective_fun_score(low_conf, weight)
+
+    def test_crowd_boost_tag_when_votes_lift_ranking(self):
+        """A vote-boosted item is flagged '+crowd' so a lower-fun item ranking
+        above a higher-fun one reads correctly (Greptile #592)."""
+        boosted = _candidate(source="reddit", title="BoostedItem", fun_score=72, local_relevance=1.0,
+                             top_comments=[{"body": "crowd loved this line a lot", "score": 6000}])
+        plain = _candidate(source="reddit", title="PlainItem", fun_score=90,
+                           top_comments=[{"body": "very funny on its own merit here"}])
+        out = _render([boosted, plain])
+        assert "+crowd" in out
+        # The plain (no-votes) item carries no crowd tag.
+        plain_line = [ln for ln in out.splitlines() if "PlainItem" in ln][0]
+        assert "+crowd" not in plain_line
 
     def test_no_votes_preserves_pure_fun_ordering(self):
         """With no comment votes, Best Takes ordering matches pure fun_score (no regression)."""

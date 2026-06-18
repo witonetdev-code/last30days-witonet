@@ -423,7 +423,10 @@ def _extract_comment_text_scored(candidate: schema.Candidate) -> str:
                 if not body:
                     continue
                 score = comment.get("score")
-                prefix = f"[+{int(score)}] " if isinstance(score, (int, float)) and score else ""
+                # Only prefix POSITIVE scores: `and score` is truthy for
+                # negatives too, which would emit a misleading `[+-3]` and
+                # invert the traction signal to the judge.
+                prefix = f"[+{int(score)}] " if isinstance(score, (int, float)) and score > 0 else ""
                 parts.append(f"{prefix}{body[:150]}")
             else:
                 body = str(comment)

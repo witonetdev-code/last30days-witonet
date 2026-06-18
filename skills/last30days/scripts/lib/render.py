@@ -2026,7 +2026,12 @@ def _render_best_takes(candidates, limit=5, threshold=70.0, vote_weight=18.0):
         if author and candidate.source == "reddit":
             container = candidate.source_items[0].container if candidate.source_items else None
             attribution = f"r/{container} comment" if container else "Reddit"
-        score_tag = f"(fun:{candidate.fun_score:.0f})"
+        # fun: is the LLM humor score; flag when crowd votes materially lifted
+        # this item's ranking, so a lower-fun item ranking above a higher-fun one
+        # reads correctly (it was crowd-boosted, not mis-ordered).
+        crowd_boost = _effective_fun_score(candidate, vote_weight) - (candidate.fun_score or 0.0)
+        crowd_tag = " +crowd" if crowd_boost >= 5.0 else ""
+        score_tag = f"(fun:{candidate.fun_score:.0f}{crowd_tag})"
         reason = f" -- {candidate.fun_explanation}" if candidate.fun_explanation and candidate.fun_explanation != "heuristic-fallback" else ""
         lines.append(f'- "{_truncate(text, 280)}" -- {attribution} {score_tag}{reason}')
     return lines
