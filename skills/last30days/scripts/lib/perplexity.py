@@ -87,11 +87,6 @@ def search(
         _log(f"Request failed: {e}")
         return [], {}
 
-    # Real-cost billing (U4): one marker per successful Perplexity call, model-
-    # keyed so deep research is priced ~100x sonar-pro. Billed here (not in the
-    # http chokepoint) because openrouter.ai is shared with the reasoning LLMs.
-    cost_markers.emit_cost("perplexity", model=model.split("/")[-1])
-
     # Parse response
     choices = data.get("choices", [])
     if not choices:
@@ -102,6 +97,12 @@ def search(
     if not synthesis:
         _log("Empty synthesis content")
         return [], {}
+
+    # Real-cost billing (U4): one marker per successful Perplexity call, model-
+    # keyed so deep research is priced ~100x sonar-pro. Billed here (not in the
+    # http chokepoint) because openrouter.ai is shared with the reasoning LLMs.
+    # Emit only after we have usable synthesis, matching generate_json policy.
+    cost_markers.emit_cost("perplexity", model=model.split("/")[-1])
 
     # Extract citations from annotations
     annotations = choices[0].get("message", {}).get("annotations", [])
