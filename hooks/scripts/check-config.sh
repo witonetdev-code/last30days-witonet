@@ -171,3 +171,4 @@ else
   echo "  100 free credits, no credit card — scrapecreators.com"
   echo "  last30days has no affiliation with any API provider."
 fi
+exit 0
