@@ -859,16 +859,20 @@ def _run_supplemental_searches(
     if not handles and not related_handles:
         return
 
-    # Pick the X handle-search backend: the primary X backend (env.x_backend_chain),
-    # if it supports from:/mentions search. bird scrapes X GraphQL with the user's
-    # browser cookies; xquik runs the same lanes over its REST API. xai/xurl have
-    # no handle-lane implementation, so they skip Phase 2. All items land under
-    # the single "x" slug.
+    # Pick the X handle-search backend: the first handle-capable backend in the
+    # chain (bird or xquik). These supplemental from:/mentions lanes are
+    # complementary to the topic search, so when the topic primary can't run
+    # them (xai/xurl have no handle-lane implementation) but a capable backend
+    # is available, use it rather than skipping Phase 2. bird scrapes X GraphQL
+    # with the user's browser cookies; xquik runs the same lanes over its REST
+    # API. All items land under the single "x" slug.
     x_slug = "x"
     chain = env.x_backend_chain(config)
-    # Trust an explicit runtime backend (already resolved as available); else
-    # use the primary from the chain.
-    primary = runtime.x_search_backend or (chain[0] if chain else None)
+    # Trust an explicit runtime backend as the head of the chain.
+    pinned = runtime.x_search_backend
+    if pinned:
+        chain = [pinned] + [b for b in chain if b != pinned]
+    primary = next((b for b in chain if b in ("bird", "xquik")), None)
 
     if primary == "bird":
         def _from_lane(hs: list, count: int) -> list:

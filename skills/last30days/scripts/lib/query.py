@@ -184,7 +184,7 @@ def extract_compound_terms(topic: str) -> List[str]:
 
 
 def leading_mentions(text: Optional[str]) -> List[str]:
-    """Handles a post is directed at: the leading run of @mentions in the text.
+    """Return the handles a post is directed at: the leading run of @mentions in the text.
 
     X replies open with the target handle(s) (e.g. "@someone thanks!"), so the
     leading run identifies who the post is addressed to. A mention later in the
