@@ -635,7 +635,13 @@ def _finalize_items_by_source(
             # relevance. Backfill survivors that arrived without one so the
             # transcript budget lands on videos the brief actually shows
             # (#542).
-            youtube_yt.backfill_transcripts(items, topic=topic, depth=depth)
+            sc_token = (
+                config.get("SCRAPECREATORS_API_KEY")
+                if config and env.is_youtube_sc_available(config) else None
+            )
+            youtube_yt.backfill_transcripts(
+                items, topic=topic, depth=depth, token=sc_token,
+            )
         # Post-merge topic-relevance filter for Polymarket: comparison queries
         # fan out into per-entity subqueries ("Hermes", "OpenClaw") whose topic
         # is too narrow for Gamma API to filter meaningfully. Re-validating the
@@ -1147,22 +1153,34 @@ def _retrieve_stream(
         # from the original user topic, not the planner's narrowed search_query.
         yt_query = raw_topic or subquery.search_query
         result = None
-        # Try yt-dlp first, fall back to SC YouTube if it fails or isn't installed
+        # ScrapeCreators key (when present) is the default-on backup tier: it
+        # powers the per-video transcript fallback, the SC search fallback, and
+        # comment enrichment. None when no key, which keeps everything keyless.
+        sc_token = (
+            config.get("SCRAPECREATORS_API_KEY", "")
+            if env.is_youtube_sc_available(config) else None
+        )
+        # Try yt-dlp first; the SC transcript fallback covers per-video failures.
         if which("yt-dlp"):
             try:
-                result = youtube_yt.search_and_transcribe(yt_query, from_date, to_date, depth=depth)
+                result = youtube_yt.search_and_transcribe(
+                    yt_query, from_date, to_date, depth=depth, token=sc_token,
+                )
             except Exception:
                 result = None
-        if (result is None or not result.get("items")) and env.is_youtube_sc_available(config):
-            sc_token = config.get("SCRAPECREATORS_API_KEY", "")
-            result = youtube_yt.search_youtube_sc(yt_query, from_date, to_date, depth=depth, token=sc_token)
+        # Fall back to SC YouTube search if yt-dlp failed or isn't installed.
+        if (result is None or not result.get("items")) and sc_token:
+            result = youtube_yt.search_youtube_sc(
+                yt_query, from_date, to_date, depth=depth, token=sc_token,
+            )
         if result is None:
             result = {"items": []}
-        # Enrich top videos with comments when SC key is available
+        # Enrich top videos with comments (default-on when a key is present).
         items = youtube_yt.parse_youtube_response(result)
         if items and env.is_youtube_comments_available(config):
-            sc_token = config.get("SCRAPECREATORS_API_KEY", "")
-            youtube_yt.enrich_with_comments(items, token=sc_token)
+            youtube_yt.enrich_with_comments(
+                items, token=config.get("SCRAPECREATORS_API_KEY", ""),
+            )
         return items, {}
     if source == "tiktok":
         # Use raw_topic so expand_tiktok_queries() generates diverse variants
