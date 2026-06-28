@@ -1,7 +1,7 @@
 [project]
-name = "last30days-skill"
-version = "3.8.3"
-description = "Multi-source last-30-days research skill"
+name = "last30days-witonet"
+version = "3.8.3+witonet.1"
+description = "Fork witonet de last30days-skill — investigación multi-fuente en español"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []

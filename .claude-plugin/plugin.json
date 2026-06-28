@@ -1,14 +1,13 @@
 {
-  "name": "last30days",
-  "version": "3.8.3",
-  "description": "Research any topic across Reddit, X, YouTube, TikTok, Instagram, Hacker News, Polymarket, GitHub, and 5+ more sources. AI agent scores by upvotes, likes, and real money - not editors.",
+  "name": "ultimos30dias",
+  "version": "3.8.3+witonet.1",
+  "description": "Investiga cualquier tema en Reddit, X, YouTube, TikTok, HN, Polymarket, GitHub y más. Síntesis en español, puntuado por engagement real.",
   "author": {
-    "name": "Matt Van Horn",
-    "email": "mvanhorn@gmail.com",
-    "url": "https://github.com/mvanhorn"
+    "name": "witonetdev",
+    "url": "https://github.com/witonetdev-code"
   },
-  "homepage": "https://github.com/mvanhorn/last30days-skill",
-  "repository": "https://github.com/mvanhorn/last30days-skill",
+  "homepage": "https://github.com/witonetdev-code/last30days-witonet",
+  "repository": "https://github.com/witonetdev-code/last30days-witonet",
   "license": "MIT",
   "keywords": [
     "competitor research",

@@ -1,12 +1,12 @@
 ---
-name: last30days
-version: "3.8.3"
-description: "Research what people actually say about any topic in the last 30 days. Pulls posts and engagement from Reddit, X, YouTube, TikTok, Hacker News, Polymarket, GitHub, and the web."
-argument-hint: 'last30days nvidia earnings reaction | last30days AI video tools | last30days what users want in react'
+name: ultimos30dias
+version: "3.8.3+witonet.1"
+description: "Investiga lo que la gente dice realmente sobre cualquier tema en los últimos 30 días. Reddit, X, YouTube, TikTok, Hacker News, Polymarket, GitHub y web — síntesis en español."
+argument-hint: 'ultimos30dias reacción earnings nvidia | ultimos30dias herramientas video IA | ultimos30dias qué quieren usuarios de react'
 allowed-tools: Bash, Read, Write, AskUserQuestion, WebSearch
-homepage: https://github.com/mvanhorn/last30days-skill
-repository: https://github.com/mvanhorn/last30days-skill
-author: mvanhorn
+homepage: https://github.com/witonetdev-code/last30days-witonet
+repository: https://github.com/witonetdev-code/last30days-witonet
+author: witonetdev
 license: MIT
 user-invocable: true
 metadata:
@@ -34,7 +34,7 @@ metadata:
     primaryEnv: SCRAPECREATORS_API_KEY
     files:
       - "scripts/*"
-    homepage: https://github.com/mvanhorn/last30days-skill
+    homepage: https://github.com/witonetdev-code/last30days-witonet
     tags:
       - research
       - deep-research
@@ -61,6 +61,18 @@ metadata:
       - hiring-signals
       - ai-skill
       - clawhub
+---
+
+# FORK WITONET — IDIOMA Y COMANDO
+
+Este skill es el fork personalizado **ultimos30dias** de [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill).
+
+- **Comando:** `/ultimos30dias <tema>` (equivalente al `/last30days` del upstream).
+- **Idioma de salida:** español neutro (es). Toda la síntesis, invitación final y etiquetas del contrato de voz van en español. Las citas de fuentes conservan el idioma original entre comillas.
+- **Motor:** el engine Python sigue en inglés internamente; solo la capa de síntesis del modelo se localiza.
+
+**LEY DE IDIOMA (no negociable):** la respuesta al usuario debe estar íntegramente en español, salvo nombres propios, handles (@usuario), subreddits (r/sub) y citas textuales de fuentes.
+
 ---
 
 # STEP 0: STALE-CLONE SELF-CHECK — RUN BEFORE READING BELOW
@@ -94,12 +106,12 @@ If the SKILL.md path you just Read contains `/.claude/plugins/marketplaces/` AND
 
 # SKILL CONTRACT — READ BEFORE ANY TOOL CALL
 
-You are inside the `/last30days` SKILL. This is a specific research tool with a 1400+ line instruction contract (the rest of this file) that defines EXACTLY how to produce the research output. It is not a generic "last 30 days of X" research prompt. Do NOT treat `/last30days` as a search keyword you can improvise against.
+You are inside the `/ultimos30dias` SKILL. This is a specific research tool with a 1400+ line instruction contract (the rest of this file) that defines EXACTLY how to produce the research output. It is not a generic "last 30 days of X" research prompt. Do NOT treat `/ultimos30dias` as a search keyword you can improvise against.
 
 **Named failure mode (2026-04-18 public v3.0.6 0/8 regression):** on 8 consecutive public invocations, Opus 4.7 treated `/last30days` as a generic research keyword and improvised. Every single run violated LAW 2 (invented titles like "The headline", "Kanye West: the last 30 days"), LAW 4 (section headers like "Why he is everywhere this month", "1. gstack dominates", "The 'Homecoming' peak"), or both. One run (Matt Van Horn) skipped Step 0.5 / Step 0.55 entirely and ran the engine bare with zero resolution flags. Another (Garry Tan) leaked a trailing `Sources:` block despite LAW 1 reinforcement at four tiers. Two runs (Peter Steinberger, Kanye vs Kim) landed on a stale `~/.openclaw/skills/last30days/` engine copy via a self-written path-discovery loop.
 
 **How v3.0.7 fixes it:** three structural anchors.
-1. **The MANDATORY first-line badge** (`🌐 last30days v{VERSION} · synced {YYYY-MM-DD}`) at the top of every response is the LAW 2 / LAW 4 enforcement anchor. See "BADGE (MANDATORY, FIRST LINE OF OUTPUT)" in the synthesis section.
+1. **The MANDATORY first-line badge** (`🌐 ultimos30dias v{VERSION} · sincronizado {YYYY-MM-DD}`) at the top of every response is the LAW 2 / LAW 4 enforcement anchor. See "BADGE (MANDATORY, FIRST LINE OF OUTPUT)" in the synthesis section.
 2. **The SKILL_DIR substitution** in the engine Bash calls uses the directory of the SKILL.md the model just Read — no resolver list, no precedence walk. Whichever install the harness loaded SKILL.md from is the install whose engine runs. Aligns spec-with-code and works for any harness without enumerating its install path.
 3. **This preface** tells you plainly: do NOT improvise. Follow SKILL.md top to bottom.
 
@@ -114,7 +126,7 @@ These anchors used to live at line 1094 of this file. Three independent Opus 4.7
 **BADGE (MANDATORY, FIRST LINE OF OUTPUT):** The Python engine now emits the badge as the first line of its `--emit=compact` stdout. Your correct behavior is to PASS THROUGH the script's output verbatim. If you are writing your own synthesis from scratch and need to emit the badge yourself, use:
 
 ```
-🌐 last30days v{VERSION} · synced {YYYY-MM-DD}
+🌐 ultimos30dias v{VERSION} · sincronizado {YYYY-MM-DD}
 ```
 
 Replace `{VERSION}` with the installed plugin version (`jq -r '.version' "$SKILL_DIR/../../.claude-plugin/plugin.json" 2>/dev/null || awk '/^version:/{gsub(/"/,"",$2); print $2; exit}' "$SKILL_DIR/SKILL.md"`) and `{YYYY-MM-DD}` with today's date. No other text on this line. One blank line after, then the synthesis begins.
@@ -122,8 +134,8 @@ Replace `{VERSION}` with the installed plugin version (`jq -r '.version' "$SKILL
 **Why the badge is MANDATORY:** it is the structural anchor for the canonical output shape. Without it the model drifts into blog-post narrative format with `##` section headers and invented titles, violating LAW 2 and LAW 4. The 2026-04-18 public v3.0.6 0/8 regression produced outputs with section headers like "The headline", "Why he is everywhere", "1. gstack dominates", "The 'Homecoming' peak". Direct cause: this anchor was absent. Do NOT skip the badge. Do NOT describe it. Do NOT paraphrase it. Emit it verbatim as line 1.
 
 **Placement by query type:**
-- GENERAL / NEWS / PROMPTING / RECOMMENDATIONS: badge on line 1, blank line 2, `What I learned:` on line 3, then bold-lead-in paragraphs
-- COMPARISON: badge on line 1, blank line 2, `# {TOPIC_A} vs {TOPIC_B} [vs {TOPIC_C}]: What the Community Says (/Last30Days)` on line 3, then Quick Verdict section
+- GENERAL / NEWS / PROMPTING / RECOMMENDATIONS: badge on line 1, blank line 2, `Lo que aprendí:` on line 3, then bold-lead-in paragraphs
+- COMPARISON: badge on line 1, blank line 2, `# {TOPIC_A} vs {TOPIC_B} [vs {TOPIC_C}]: Lo que dice la comunidad (/Ultimos30Dias)` on line 3, then Quick Verdict section
 
 ---
 
@@ -139,25 +151,25 @@ These LAWs dominate every other rule in this file. If you find yourself about to
 
 **Post-synthesis self-check (do this BEFORE emitting your response):** scan the last 15 lines for `Sources:` / `References:` / `Further reading:` / `Citations:` followed by a bulleted list, a bulleted list of publication names / @handles / URLs without analysis, a "See also" link dump, or any bulleted list AFTER the invitation block. If found, DELETE before sending. Observed violations: 2026-04-18 Peter Steinberger run 1 (9-item Sources list) and Peter Steinberger run 2 post plan 008 (7-item Sources list). Three tiers of LAW 1 reinforcement were not enough; the self-check is the fourth tier.
 
-**LAW 2 - NO INVENTED TITLE LINE (with COMPARISON exception).** For QUERY_TYPE GENERAL, NEWS, PROMPTING, RECOMMENDATIONS: the first line of your synthesis body (after the badge and one blank line) is the prose label `What I learned:` on its own line. Not `What I learned about {Topic}`, not `{Topic} - Last 30 Days`, not `{Topic}: What People Are Saying`, not `# {Topic}`, not `The headline`, not `Why he is everywhere this month`. Nothing above `What I learned:` except the badge. If you are tempted to write a title or a `##`-prefixed section name, the rule is: the badge IS the title, and section headers are forbidden (see LAW 4).
+**LAW 2 - NO INVENTED TITLE LINE (with COMPARISON exception).** For QUERY_TYPE GENERAL, NEWS, PROMPTING, RECOMMENDATIONS: the first line of your synthesis body (after the badge and one blank line) is the prose label `Lo que aprendí:` on its own line. Not `What I learned about {Topic}`, not `{Topic} - Last 30 Days`, not `{Topic}: What People Are Saying`, not `# {Topic}`, not `The headline`, not `Why he is everywhere this month`. Nothing above `Lo que aprendí:` except the badge. If you are tempted to write a title or a `##`-prefixed section name, the rule is: the badge IS the title, and section headers are forbidden (see LAW 4).
 
-**COMPARISON exception:** For QUERY_TYPE=COMPARISON (topics containing `vs` or `versus`), the title `# {TOPIC_A} vs {TOPIC_B} [vs {TOPIC_C}]: What the Community Says (/Last30Days)` is REQUIRED, not a violation. Comparison queries do NOT use the `What I learned:` prose label at all.
+**COMPARISON exception:** For QUERY_TYPE=COMPARISON (topics containing `vs` or `versus`), the title `# {TOPIC_A} vs {TOPIC_B} [vs {TOPIC_C}]: Lo que dice la comunidad (/Ultimos30Dias)` is REQUIRED, not a violation. Comparison queries do NOT use the `Lo que aprendí:` prose label at all.
 
 **Global-preference override:** The skill-authored template for GENERAL / NEWS / PROMPTING / RECOMMENDATIONS queries uses `**bold**` for KEY PATTERNS items and for mid-paragraph lead-ins. Do NOT strip this bold on the grounds of a personal "no bold" memory. The skill's voice contract is the formatting authority here.
 
 **LAW 3 - NO EM-DASHES OR EN-DASHES.** Use ` - ` (single hyphen with spaces on both sides) instead of `—` or `–`. This applies everywhere: synthesis body, headline separators, KEY PATTERNS list, invitation. The only exception is quoted content where the source literally used an em-dash. Em-dashes are the most reliable AI-slop tell.
 
-**LAW 4 - NO `##` or `###` SECTION HEADERS IN BODY (with COMPARISON exception).** For QUERY_TYPE GENERAL, NEWS, PROMPTING, RECOMMENDATIONS: no `## The launch`, `## Polymarket`, `## Bottom line`, `## Key patterns`. The narrative is bold-lead-in paragraphs, then the prose label `KEY PATTERNS from the research:`, then a numbered list. That is the only structure. No subheadings. The engine-emitted `## Pre-Research Status` block on flag-missing runs is allowed because it is produced by Python and passed through verbatim.
+**LAW 4 - NO `##` or `###` SECTION HEADERS IN BODY (with COMPARISON exception).** For QUERY_TYPE GENERAL, NEWS, PROMPTING, RECOMMENDATIONS: no `## The launch`, `## Polymarket`, `## Bottom line`, `## Key patterns`. The narrative is bold-lead-in paragraphs, then the prose label `PATRONES CLAVE de la investigación:`, then a numbered list. That is the only structure. No subheadings. The engine-emitted `## Pre-Research Status` block on flag-missing runs is allowed because it is produced by Python and passed through verbatim.
 
 **COMPARISON exception:** For QUERY_TYPE=COMPARISON, the following `##` headers are REQUIRED per the comparison template: `## Quick Verdict`, `## {Entity}` (one per compared entity), `## Head-to-Head`, `## The Bottom Line`, `## The emerging stack`. Any other `##` header is still forbidden. See the `### If QUERY_TYPE = COMPARISON` section for the full template.
 
-**Observed LAW 4 violation (2026-04-18, Peter Steinberger disaster #2):** the model emitted `Headline`, `What he is actually saying`, `Cross-source corroboration`, `Where evidence is thin`, `Bottom line` on a GENERAL query. The narrative shape for person topics is `What I learned:` + bold-lead-in paragraphs + prose label `KEY PATTERNS from the research:` + numbered list. No blog-post subheadings.
+**Observed LAW 4 violation (2026-04-18, Peter Steinberger disaster #2):** the model emitted `Headline`, `What he is actually saying`, `Cross-source corroboration`, `Where evidence is thin`, `Bottom line` on a GENERAL query. The narrative shape for person topics is `Lo que aprendí:` + bold-lead-in paragraphs + prose label `PATRONES CLAVE de la investigación:` + numbered list. No blog-post subheadings.
 
 **LAW 5 - ENGINE FOOTER PASS-THROUGH. EVERY QUERY TYPE. EVERY RUN.** The engine output ends with a `✅ All agents reported back!` emoji-tree footer bounded by `---` lines and wrapped in `<!-- PASS-THROUGH FOOTER -->` / `<!-- END PASS-THROUGH FOOTER -->` comments (v3.0.10+). You MUST include that block verbatim in your synthesis, positioned after KEY PATTERNS (and after the comparison-table scaffold if present) and before the invitation. Do not recompute the stats, reformat the tree, paraphrase, skip it, or fabricate your own `## Notable Stats` replacement. A response without the engine footer is not valid skill output.
 
-**LAW 6 - NO RAW RANKED EVIDENCE CLUSTERS IN BODY.** The engine's `## Ranked Evidence Clusters`, `## Stats`, and `## Source Coverage` blocks are bounded inside `<!-- EVIDENCE FOR SYNTHESIS -->` / `<!-- END EVIDENCE FOR SYNTHESIS -->` comments in the `--emit compact` / `--emit md` stdout. They are raw evidence for YOU to read, not output to emit. Transform them into `What I learned:` prose paragraphs per LAW 2 (or the COMPARISON template sections per the LAW 4 exception). If your response contains the literal string `### 1.` followed by a score tuple like `(score N, M items, sources: ...)`, or the string `- Uncertainty: single-source` / `- Uncertainty: thin-evidence`, you dumped evidence instead of synthesizing. STOP and regenerate.
+**LAW 6 - NO RAW RANKED EVIDENCE CLUSTERS IN BODY.** The engine's `## Ranked Evidence Clusters`, `## Stats`, and `## Source Coverage` blocks are bounded inside `<!-- EVIDENCE FOR SYNTHESIS -->` / `<!-- END EVIDENCE FOR SYNTHESIS -->` comments in the `--emit compact` / `--emit md` stdout. They are raw evidence for YOU to read, not output to emit. Transform them into `Lo que aprendí:` prose paragraphs per LAW 2 (or the COMPARISON template sections per the LAW 4 exception). If your response contains the literal string `### 1.` followed by a score tuple like `(score N, M items, sources: ...)`, or the string `- Uncertainty: single-source` / `- Uncertainty: thin-evidence`, you dumped evidence instead of synthesizing. STOP and regenerate.
 
-**Observed LAW 6 violation (2026-04-19, Hermes Agent Use Cases disaster):** two consecutive `/last30days Hermes Agent (Actual) Use Cases` runs returned the raw `## Ranked Evidence Clusters` block verbatim as user output, with 8 cluster entries carrying `(score N, M items, sources: ...)` tuples and `- Uncertainty: single-source` lines. Root cause: the prior canonical-boundary text said "Pass through the lines ABOVE this boundary verbatim," which the model scoped broadly to include the scratchpad. The current boundary text and this LAW 6 scope pass-through to the PASS-THROUGH FOOTER block only. A third run on the same topic framed as "Hermes Workflows" produced the correct `What I learned:` prose synthesis, which is the shape every run must produce.
+**Observed LAW 6 violation (2026-04-19, Hermes Agent Use Cases disaster):** two consecutive `/last30days Hermes Agent (Actual) Use Cases` runs returned the raw `## Ranked Evidence Clusters` block verbatim as user output, with 8 cluster entries carrying `(score N, M items, sources: ...)` tuples and `- Uncertainty: single-source` lines. Root cause: the prior canonical-boundary text said "Pass through the lines ABOVE this boundary verbatim," which the model scoped broadly to include the scratchpad. The current boundary text and this LAW 6 scope pass-through to the PASS-THROUGH FOOTER block only. A third run on the same topic framed as "Hermes Workflows" produced the correct `Lo que aprendí:` prose synthesis, which is the shape every run must produce.
 
 **Worked example (LAW 6 transformation).** Evidence block you read:
 
@@ -182,7 +194,7 @@ These LAWs dominate every other rule in this file. If you find yourself about to
 Output you emit (prose synthesis, NOT the evidence block):
 
 ```
-What I learned:
+Lo que aprendí:
 
 The self-evolving loop is the sticky use case. Every 15 tool calls Hermes pauses, self-evaluates, and writes a Skill Document from what worked. Prompt Engineering's 11K-view walkthrough frames this as the real differentiator: "every 15 tool calls, the agent kind of pauses, and then it does self-evaluation."
 
@@ -197,7 +209,7 @@ Named-entity topics (capitalized proper nouns, product names, person names, proj
 
 **Self-check before Bash:** re-read your pending `scripts/last30days.py` command. Does it contain `--plan "$QUERY_PLAN_FILE"` (or another path the engine can read)? If no, and the topic is a named entity, STOP. Return to Step 0.75 and generate the plan, then write it to a tmpfile per the Step 1 pattern. Do not interpret the word "provider" in any engine message as "you need credentials" - you are the provider.
 
-**LAW 8 - CITE READABLY FOR THE CURRENT HOST. INLINE-LINK ON HIDDEN-LINK HOSTS; PLAIN LABELS ON VISIBLE-URL HOSTS. NEVER A RAW URL STRING. NEVER URL SOUP.** Applies to every query type - the "What I learned:" narrative, KEY PATTERNS, and the COMPARISON body sections. There are two rendering regimes and the host picks which one you use:
+**LAW 8 - CITE READABLY FOR THE CURRENT HOST. INLINE-LINK ON HIDDEN-LINK HOSTS; PLAIN LABELS ON VISIBLE-URL HOSTS. NEVER A RAW URL STRING. NEVER URL SOUP.** Applies to every query type - the "Lo que aprendí:" narrative, KEY PATTERNS, and the COMPARISON body sections. There are two rendering regimes and the host picks which one you use:
 
 - **Hidden-link hosts (Claude Code) - inline-link every citation.** Claude Code renders `[text](url)` as blue CMD-clickable text: the URL is hidden, only the label shows. Wrap every cited @handle, r/subreddit, publication, YouTube channel, TikTok creator, Instagram creator, and Polymarket market as `[name](url)` at first mention. The URL comes from the raw research dump (every engine item carries one; WebSearch supplements carry their own). This rich-citation form is the default and must not regress.
 - **Visible-URL hosts (Codex, Cursor, Gemini CLI, raw CLI) - plain source labels, no narrative Markdown links.** These hosts render `[label](url)` as `label (https://...)` with the URL shown inline, so inline-linking every citation turns the narrative into unreadable URL soup. Cite with the bare label instead - `per @handle`, `per r/subreddit`, `per KSAT`, `Polymarket has X at Y%` - and let the engine pass-through footer and the saved raw file carry the full URLs.
@@ -216,7 +228,7 @@ The stats footer (emoji-tree block) is engine-emitted per LAW 5 and passes throu
 
 **Observed LAW 8 need (2026-04-20 inline-links saga; renderer split 2026-06-25):** the citation rule originally lived in the CITATION PRIORITY block around line 1224 - below the chunked-read window - and four consecutive runs (Matt Van Horn, Peter Steinberger, Best Headphones, OpenClaw vs Hermes) skipped it because the model read lines 1-1000 and stopped ("I never reached line 1224"). Hoisting the rule into the same guaranteed-loaded band as LAWs 1-7 fixed that - it now enters context on every run. The 2026-06-25 split then added the visible-URL regime: a Codex run obeyed the hoisted rule and inline-linked every citation, but Codex prints the URL inline, so the output rendered as URL soup. The rule was firing; it had just assumed Claude Code's hidden-URL renderer. Same hoist pattern that solved v3.0.6 (invented titles), disaster #2 (stripped bold), disaster #3 (trailing Sources), and the Hermes 2026-04-19 evidence-dump disaster.
 
-**Post-synthesis self-check (do this BEFORE emitting your response):** branch by host. On a hidden-link host (`CLAUDECODE` set), scan your drafted "What I learned:" and KEY PATTERNS for the `[name](url)` pattern - if zero inline links appear and the raw dump has URLs for the @handles, r/subs, and publications you cited as plain text, regenerate ONCE with inline links added. On a visible-URL host (`CLAUDECODE` unset), scan for `label (https://...)` clutter - if more than a couple of inline URLs are showing, regenerate ONCE with plain labels, leaving URL traceability to the footer and the saved raw file. Either way, dropping a host's required citation form is not a valid way to satisfy another LAW; LAWs 1 (no trailing Sources) and 8 are complementary, not alternatives.
+**Post-synthesis self-check (do this BEFORE emitting your response):** branch by host. On a hidden-link host (`CLAUDECODE` set), scan your drafted "Lo que aprendí:" and KEY PATTERNS for the `[name](url)` pattern - if zero inline links appear and the raw dump has URLs for the @handles, r/subs, and publications you cited as plain text, regenerate ONCE with inline links added. On a visible-URL host (`CLAUDECODE` unset), scan for `label (https://...)` clutter - if more than a couple of inline URLs are showing, regenerate ONCE with plain labels, leaving URL traceability to the footer and the saved raw file. Either way, dropping a host's required citation form is not a valid way to satisfy another LAW; LAWs 1 (no trailing Sources) and 8 are complementary, not alternatives.
 
 **LAW 9 - WEAVE THE COMMUNITY VOICE; NEVER NARRATE THE TOOLING.** The EVIDENCE block carries a `## Top Community Comments` section (vote-ranked actual comments across all sources, each with author, vote count, and URL) and, when present, a `## Best Takes` section. These are the funniest/sharpest crowd reactions and are the entire point of this tool. **You MUST weave at least 2 verbatim, attributed community comments into the synthesis** - quote the actual text, attribute to the commenter (`u/name`, `@handle`), mix them into the narrative where they fit (never a separate "Comments" section). A top comment with thousands of votes is a stronger signal than the parent post's stats. The "It's called TurkiYe" / "Tell me what he BUILT" class of line is the report's headline value, not a footnote. When you inline-link a comment on a hidden-link host, copy its URL verbatim from the block - NEVER reconstruct or guess a status id (a wrong link looks authoritative; reconstructing one is a LAW 8 violation); on a visible-URL host, attribute the comment plainly (`u/name`, `@handle`) and leave the URL to the saved raw file. And **never narrate the engine's own behavior in the deliverable** - no "the social-listening engine struck out", no "name collided with X", no "the X column is noise". Present what is true about the subject and quietly drop the junk; engine-health belongs in diagnostics, not the prose.
 
@@ -959,7 +971,7 @@ Use `--hiring-signals` when the user asks what a company's jobs page, careers pa
 
 **Weight by novelty and departure-from-baseline, not raw role count.** A single strategic role can outweigh a department's worth of headcount. The engine surfaces a `Strategic single-role signals` list (founding / first-of-function / specialized / new-geo flags) that is NOT count-gated - read it and judge true novelty yourself, because "is this domain new for this company?" needs world knowledge a keyword map cannot encode. Concretely: 5 engineer roles in a company's core area = "doubling down" (scale signal); 2 roles in an area they have never worked in = a "new bet" (direction signal) and usually the more important story. A `Founding {Role}, {New Capability}` posting (e.g. "Founding Research Scientist, Human Simulation" at a company built on real human interviews) is exactly the high-signal tell that raw counting buries. In synthesis, distinguish "new bets" from "doubling down" in the prose rather than ranking purely by how many roles share a theme.
 
-**Output title for a scoped `--hiring-signals` report.** This is a scoped report, not a general run - it gets a scoped title instead of the `What I learned:` label. Badge on line 1, blank line 2, then `# {Company} - Hiring Signals` on line 3, then the synthesis. Lead with the strongest strategic signal (often a new bet), then the scale signals, then the engine's `## Hiring Signals` evidence block.
+**Output title for a scoped `--hiring-signals` report.** This is a scoped report, not a general run - it gets a scoped title instead of the `Lo que aprendí:` label. Badge on line 1, blank line 2, then `# {Company} - Hiring Signals` on line 3, then the synthesis. Lead with the strongest strategic signal (often a new bet), then the scale signals, then the engine's `## Hiring Signals` evidence block.
 
 **`--hiring-signals` is jobs-scoped - do not build a multi-source plan for it.** When `--hiring-signals` is set the engine searches the jobs source only (it ignores the per-subquery `sources` in your `--plan`). So for a pure hiring-signals run, skip the Step 0.75 multi-source plan work - a 1-subquery plan (or no `--plan` at all) is sufficient, and a rich reddit/x/youtube plan is wasted effort because it gets discarded. If the user wants hiring signals AND community sentiment in one run, pass an explicit `--search=reddit,x,jobs` alongside `--hiring-signals` (the explicit `--search` flag is what keeps the other sources alive).
 
@@ -1009,6 +1021,12 @@ Canonical category peers (single source of truth; `scripts/lib/categories.py` mi
 | `saas_productivity` | Notion app, Obsidian, Linear app, Asana, ClickUp, productivity app | `productivity, SaaS, ObsidianMD, Notion` |
 | `prediction_markets` | Polymarket, Kalshi, prediction market, event contracts, Manifold Markets | `Polymarket, Kalshi, predictionmarkets` |
 | `crypto_defi` | DeFi protocol, yield farming, liquidity pool, stablecoin, layer 2, L2 rollup | `defi, ethfinance, CryptoCurrency, ethereum` |
+| `automatizacion_workflow` | n8n, Make.com, Zapier, automatización, workflow automation, flujo de trabajo, orquestación de agentes | `n8n, selfhosted, SaaS, Entrepreneur` |
+| `marketing_digital` | marketing digital, growth hacking, embudo de ventas, email marketing, SEO técnico, content marketing | `marketing, digital_marketing, SEO, Entrepreneur` |
+| `fintech_latam` | fintech latam, neobanco, open banking, pagos digitales, billetera digital, cripto latam | `fintech, PersonalFinance, CryptoCurrency, Economics` |
+| `ia_espanol` | IA en español, ChatGPT español, prompts en español, inteligencia artificial español | `ChatGPT, ClaudeAI, LocalLLaMA, artificial` |
+| `nocode_lowcode` | no-code, low-code, Bubble.io, Webflow, FlutterFlow, herramienta sin código | `nocode, webflow, SaaS, Entrepreneur` |
+| `ecommerce_latam` | ecommerce latam, tienda online, Shopify latam, Mercado Libre seller, dropshipping español | `ecommerce, shopify, Entrepreneur, marketing` |
 
 **Merging rule.** Start with WebSearch-returned subs. Append 2-3 category peers in the priority order shown. Dedupe case-insensitively (don't list `midjourney` twice if WebSearch already returned it). Cap total at 10: if adding all peers would exceed the cap, keep every WebSearch-returned sub (they are the freshest signal) and drop peers from the end of the priority list.
 
@@ -1561,14 +1579,14 @@ Notice how the good version:
 
 ### If QUERY_TYPE = COMPARISON
 
-**Comparison queries have their OWN synthesis template. Do NOT use the general-query `What I learned:` + bold-lead-in + `KEY PATTERNS:` structure for comparisons.** The comparison template below is the canonical shape proven by the April 9 launch-video exemplar. Follow it section-for-section.
+**Comparison queries have their OWN synthesis template. Do NOT use the general-query `Lo que aprendí:` + bold-lead-in + `KEY PATTERNS:` structure for comparisons.** The comparison template below is the canonical shape proven by the April 9 launch-video exemplar. Follow it section-for-section.
 
 Voice contract LAWs 1, 3, 5 apply to comparisons unchanged (no `Sources:` block, no em-dashes, engine footer pass-through). LAWs 2 and 4 have comparison-specific exceptions (see the LAW block: the comparison title and the five section headers below are REQUIRED, not violations).
 
 **Required comparison structure (match the April 9 exemplar):**
 
 ```
-🌐 last30days v{VERSION} · synced {YYYY-MM-DD}
+🌐 ultimos30dias v{VERSION} · sincronizado {YYYY-MM-DD}
 
 # {TOPIC_A} vs {TOPIC_B} [vs {TOPIC_C}]: What the Community Says (/Last30Days)
 
@@ -1642,9 +1660,9 @@ I've compared {TOPIC_A} vs {TOPIC_B} [vs ...] using the latest community data. S
 ```
 
 **Do NOT:**
-- Use `What I learned:` prose label (that is general-query voice)
+- Use `Lo que aprendí:` prose label (that is general-query voice)
 - Use bold-lead-in paragraphs with ` - ` separators for the body (that is general-query voice)
-- Use a `KEY PATTERNS from the research:` numbered list (replaced by per-entity Strengths/Weaknesses bullets and the emerging-stack paragraph)
+- Use a `PATRONES CLAVE de la investigación:` numbered list (replaced by per-entity Strengths/Weaknesses bullets and the emerging-stack paragraph)
 - Fabricate a `## Notable Stats` block (the engine footer IS the stats block, LAW 5)
 - Produce section headers outside the six listed above (`## Quick Verdict`, `## {Entity}` per entity, `## Head-to-Head`, `## The Bottom Line`, `## The emerging stack` are the only allowed `##` headers per LAW 4 comparison exception)
 
@@ -1730,14 +1748,14 @@ here for the conversation, not the press release.
 
 **NEVER use em-dashes (`—`) or en-dashes (`–`) anywhere in your response.** Use ` - ` (single hyphen with spaces) instead. Em-dashes are the most reliable AI-slop tell; a response with em-dashes reads as generated. This applies to synthesis body, headline separators, KEY PATTERNS list, and the invitation section. The only exception is quoted content where the source used an em-dash.
 
-**NEVER use `##` or `###` markdown section headers in your response body.** No `## The launch`, no `## Where it disappoints`, no `## Polymarket`, no `## Best quotes`, no `## Stats snapshot`. Those read as AI-slop news-article structure. The narrative is a short block of bold-lead-in paragraphs followed by a prose label `KEY PATTERNS from the research:` followed by a numbered list. That is the only structure.
+**NEVER use `##` or `###` markdown section headers in your response body.** No `## The launch`, no `## Where it disappoints`, no `## Polymarket`, no `## Best quotes`, no `## Stats snapshot`. Those read as AI-slop news-article structure. The narrative is a short block of bold-lead-in paragraphs followed by a prose label `PATRONES CLAVE de la investigación:` followed by a numbered list. That is the only structure.
 
-**NEVER write a title line at the top of your response.** No `Kanye West: last 30 days`, no `Claude Opus 4.7 - what people are actually saying`, no `{Topic} news`. Your response begins with the MANDATORY badge on line 1, one blank line, then the prose label `What I learned:` on line 3, and goes straight into the narrative.
+**NEVER write a title line at the top of your response.** No `Kanye West: last 30 days`, no `Claude Opus 4.7 - what people are actually saying`, no `{Topic} news`. Your response begins with the MANDATORY badge on line 1, one blank line, then the prose label `Lo que aprendí:` on line 3, and goes straight into the narrative.
 
 ```
-🌐 last30days v{VERSION} · synced {YYYY-MM-DD}
+🌐 ultimos30dias v{VERSION} · sincronizado {YYYY-MM-DD}
 
-What I learned:
+Lo que aprendí:
 
 **{Headline summarizing topic 1}** - [1-2 sentences about what people are saying, per [@handle](https://x.com/handle) or [r/sub](https://reddit.com/r/sub)]
 
@@ -1745,7 +1763,7 @@ What I learned:
 
 **{Headline summarizing topic 3}** - [1-2 sentences, per [@handle](https://x.com/handle) or [r/sub](https://reddit.com/r/sub)]
 
-KEY PATTERNS from the research:
+PATRONES CLAVE de la investigación:
 1. [Pattern] - per [@handle](https://x.com/handle)
 2. [Pattern] - per [r/sub](https://reddit.com/r/sub)
 3. [Pattern] - per [@handle](https://x.com/handle)

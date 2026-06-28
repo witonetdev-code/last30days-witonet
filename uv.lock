@@ -105,8 +105,8 @@ wheels = [
 ]
 
 [[package]]
-name = "last30days-skill"
-version = "3.8.3"
+name = "last30days-witonet"
+version = "3.8.3+witonet.1"
 source = { virtual = "." }
 
 [package.dev-dependencies]

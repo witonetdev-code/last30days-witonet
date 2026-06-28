@@ -244,6 +244,107 @@ CATEGORY_PEERS: dict[str, _CategoryEntry] = {
             "webdev",
         ],
     },
+    "automatizacion_workflow": {
+        "patterns": [
+            "n8n",
+            "make.com",
+            "zapier",
+            "automatización",
+            "automatizacion",
+            "workflow automation",
+            "flujo de trabajo",
+            "orquestación de agentes",
+        ],
+        "peer_subs": [
+            "n8n",
+            "selfhosted",
+            "SaaS",
+            "Entrepreneur",
+        ],
+    },
+    "marketing_digital": {
+        "patterns": [
+            "marketing digital",
+            "growth hacking",
+            "embudo de ventas",
+            "email marketing",
+            "seo técnico",
+            "seo tecnico",
+            "content marketing",
+        ],
+        "peer_subs": [
+            "marketing",
+            "digital_marketing",
+            "SEO",
+            "Entrepreneur",
+        ],
+    },
+    "fintech_latam": {
+        "patterns": [
+            "fintech latam",
+            "neobanco",
+            "open banking",
+            "pagos digitales",
+            "billetera digital",
+            "cripto latam",
+        ],
+        "peer_subs": [
+            "fintech",
+            "PersonalFinance",
+            "CryptoCurrency",
+            "Economics",
+        ],
+    },
+    "ia_espanol": {
+        "patterns": [
+            "inteligencia artificial español",
+            "inteligencia artificial espanol",
+            "ia en español",
+            "ia en espanol",
+            "chatgpt español",
+            "prompts en español",
+            "prompts en espanol",
+        ],
+        "peer_subs": [
+            "ChatGPT",
+            "ClaudeAI",
+            "LocalLLaMA",
+            "artificial",
+        ],
+    },
+    "nocode_lowcode": {
+        "patterns": [
+            "no code",
+            "no-code",
+            "low code",
+            "low-code",
+            "bubble.io",
+            "webflow",
+            "flutterflow",
+            "herramienta sin código",
+        ],
+        "peer_subs": [
+            "nocode",
+            "webflow",
+            "SaaS",
+            "Entrepreneur",
+        ],
+    },
+    "ecommerce_latam": {
+        "patterns": [
+            "ecommerce latam",
+            "tienda online",
+            "shopify latam",
+            "mercado libre seller",
+            "dropshipping español",
+        ],
+        "peer_subs": [
+            "ecommerce",
+            "shopify",
+            "Entrepreneur",
+            "marketing",
+        ],
+    },
 }
 
 
