@@ -1,24 +1,24 @@
 {
-  "name": "last30days-skill",
+  "name": "last30days-witonet",
   "owner": {
-    "name": "Matt Van Horn",
-    "url": "https://github.com/mvanhorn"
+    "name": "witonetdev",
+    "url": "https://github.com/witonetdev-code"
   },
   "metadata": {
-    "description": "Marketplace hosting the last30days research plugin."
+    "description": "Marketplace del fork ultimos30dias: investigación multi-fuente en español con rango de días configurable."
   },
   "plugins": [
     {
-      "name": "last30days",
-      "description": "Research any topic across Reddit, X, YouTube, TikTok, Instagram, Hacker News, Polymarket, GitHub, and 5+ more sources. AI agent scores by upvotes, likes, and real money - not editors.",
-      "version": "3.8.3",
+      "name": "ultimos30dias",
+      "description": "Investiga cualquier tema en Reddit, X, YouTube, TikTok, Instagram, HN, Polymarket, GitHub y más. Síntesis en español, puntuado por engagement real.",
+      "version": "3.8.3+witonet.1",
       "author": {
-        "name": "Matt Van Horn",
-        "url": "https://github.com/mvanhorn"
+        "name": "witonetdev",
+        "url": "https://github.com/witonetdev-code"
       },
       "source": "./",
       "category": "productivity",
-      "homepage": "https://github.com/mvanhorn/last30days-skill"
+      "homepage": "https://github.com/witonetdev-code/last30days-witonet"
     }
   ]
 }

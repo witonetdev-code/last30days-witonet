@@ -1,7 +1,7 @@
 ---
 name: ultimos30dias
 version: "3.8.3+witonet.1"
-description: "Investiga lo que la gente dice realmente sobre cualquier tema en los últimos 30 días. Reddit, X, YouTube, TikTok, Hacker News, Polymarket, GitHub y web — síntesis en español."
+description: "Investiga lo que la gente dice realmente sobre cualquier tema en un rango configurable (por defecto 30 días). Reddit, X, YouTube, TikTok, Hacker News, Polymarket, GitHub y web — síntesis en español."
 argument-hint: 'ultimos30dias reacción earnings nvidia | ultimos30dias herramientas video IA | ultimos30dias qué quieren usuarios de react'
 allowed-tools: Bash, Read, Write, AskUserQuestion, WebSearch
 homepage: https://github.com/witonetdev-code/last30days-witonet
@@ -68,8 +68,18 @@ metadata:
 Este skill es el fork personalizado **ultimos30dias** de [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill).
 
 - **Comando:** `/ultimos30dias <tema>` (equivalente al `/last30days` del upstream).
+- **Período:** configurable con `--days=N` (por defecto 30). Ejemplos: `--days=1` digest diario, `--days=7` resumen semanal, `--days=90` trimestral.
+- **Schedule:** en Claude Cowork, cron o automatizaciones, pasa `--days` acorde a la cadencia del job. El motor Python y la GUI web usan el mismo flag.
 - **Idioma de salida:** español neutro (es). Toda la síntesis, invitación final y etiquetas del contrato de voz van en español. Las citas de fuentes conservan el idioma original entre comillas.
 - **Motor:** el engine Python sigue en inglés internamente; solo la capa de síntesis del modelo se localiza.
+
+**Ejemplo para job programado:**
+
+```bash
+python3 skills/last30days/scripts/last30days.py \
+  "reels virales inteligencia artificial" \
+  --days=7 --search=instagram --deep --save-dir ~/Documents/Last30Days
+```
 
 **LEY DE IDIOMA (no negociable):** la respuesta al usuario debe estar íntegramente en español, salvo nombres propios, handles (@usuario), subreddits (r/sub) y citas textuales de fuentes.
 
@@ -1852,7 +1862,7 @@ I've compared {TOPIC_A} vs {TOPIC_B} using the latest community data. Some thing
 - [Deep dive into {TOPIC_A} alone with /last30days {TOPIC_A}]
 - [Deep dive into {TOPIC_B} alone with /last30days {TOPIC_B}]
 - [Focus on a specific dimension from the comparison table]
-- [Look at a different time period with --days=7 or --days=90]
+- [Profundizar en otro período con --days=7 o --days=90]
 ```
 
 **If QUERY_TYPE = GENERAL:**

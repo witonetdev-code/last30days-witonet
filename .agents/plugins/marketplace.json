@@ -1,14 +1,14 @@
 {
-  "name": "last30days-skill",
+  "name": "last30days-witonet",
   "interface": {
-    "displayName": "last30days"
+    "displayName": "ultimos30dias"
   },
   "plugins": [
     {
-      "name": "last30days",
+      "name": "ultimos30dias",
       "source": {
         "source": "url",
-        "url": "https://github.com/mvanhorn/last30days-skill.git"
+        "url": "https://github.com/witonetdev-code/last30days-witonet.git"
       },
       "policy": {
         "installation": "AVAILABLE",

@@ -10,6 +10,9 @@ docs/30-day-anniversary-tweets.md
 variants/open/references/research.md
 docs/investigations/
 
+# Local test runs
+.test-output/
+
 # OS / tool files
 .DS_Store
 .claude/
